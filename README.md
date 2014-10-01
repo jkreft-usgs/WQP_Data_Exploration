@@ -1,7 +1,7 @@
 WQP Data Exploration
 ====================
 
-This gitHub repository will store information on tools to use the Water Quality Portal
+This gitHub repository will store information on tools to use the [Water Quality Portal](http://www.waterqualitydata.us/)
 
 
 ###Package Installation
