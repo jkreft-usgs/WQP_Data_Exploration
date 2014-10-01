@@ -16,7 +16,12 @@ Alternatively, the 'in-development' version of `dataRetrieval` can be installed 
 
     library(devtools)
     install_github("USGS-R\dataRetrial")
-      
+    
+    
+See [https://github.com/USGS-R/dataRetrieval](https://github.com/USGS-R/dataRetrieval) for more information on `dataRetrieval`
+
+
+The package `USGSHydroTools` is helpful for summarizing data, and simple map plotting. See [https://github.com/USGS-R/USGSHydroTools](https://github.com/USGS-R/USGSHydroTools) for more information on `USGSHydroTools`.
       
 ###Disclaimer
 This software is in the public domain because it contains materials that originally came from the U.S. Geological Survey, an agency of the United States Department of Interior. For more information, see the [official USGS copyright policy](http://www.usgs.gov/visual-id/credit_usgs.html#copyright/ "official USGS copyright policy")
