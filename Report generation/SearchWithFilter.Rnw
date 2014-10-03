@@ -1,0 +1,294 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage{amsmath}
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage[numbers, round]{natbib}
+\usepackage[american]{babel}
+\usepackage{authblk}
+\usepackage{subfig}
+\usepackage{placeins}
+\usepackage{footnote}
+\usepackage{tabularx}
+\usepackage{parskip}
+\usepackage{threeparttable}
+
+\usepackage{longtable}
+
+\renewcommand\Affilfont{\itshape\small}
+
+\usepackage{csquotes}
+\usepackage{setspace}
+
+\doublespacing
+
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\usepackage{graphicx}
+
+
+\usepackage{mathptmx}% Times Roman font
+\usepackage[scaled=.90]{helvet}% Helvetica, served as a model for arial
+
+\usepackage{indentfirst}
+\setlength{\parskip}{0pt}
+
+\usepackage{courier}
+
+\usepackage{titlesec}
+\usepackage{titletoc}
+
+\titleformat{\section}
+  {\normalfont\sffamily\bfseries\LARGE}
+  {\thesection}{0.5em}{}
+\titleformat{\subsection}
+  {\normalfont\sffamily\bfseries\Large}
+  {\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}
+  {\normalfont\sffamily\large}
+  {\thesubsubsection}{0.5em}{}
+  
+\titlecontents{section}
+[2em]                 % adjust left margin
+{\sffamily}             % font formatting
+{\contentslabel{2.3em}} % section label and offset
+{\hspace*{-2.3em}}
+{\titlerule*[0.25pc]{.}\contentspage}
+  
+\titlecontents{subsection}
+[4.6em]                 % adjust left margin
+{\sffamily}             % font formatting
+{\contentslabel{2.3em}} % section label and offset
+{\hspace*{-2.3em}}
+{\titlerule*[0.25pc]{.}\contentspage}
+  
+\titlecontents{subsubsection}
+[6.9em]                 % adjust left margin
+{\sffamily}             % font formatting
+{\contentslabel{2.3em}} % section label and offset
+{\hspace*{-2.3em}}
+{\titlerule*[0.25pc]{.}\contentspage}
+
+\titlecontents{table}
+[0em]                 % adjust left margin
+{\sffamily}             % font formatting
+{\textbf{Table}\hspace*{2em} \contentslabel {2em}} % section label and offset
+{\hspace*{4em}}
+{\titlerule*[0.25pc]{.}\contentspage}
+
+\titlecontents{figure}
+[0em]                 % adjust left margin
+{\sffamily}             % font formatting
+{\textbf{Figure}\hspace*{2em} \contentslabel {2em}} % section label and offset
+{\hspace*{4em}}
+{\titlerule*[0.25pc]{.}\contentspage}
+
+%Italisize and change font of urls:
+\urlstyle{sf}
+\renewcommand\UrlFont\itshape
+
+\usepackage{caption}
+\captionsetup{
+  font={sf},
+  labelfont={bf,sf},
+  labelsep=period,
+  justification=justified,
+  singlelinecheck=false
+}
+
+\setlength\parindent{20pt}
+
+\textwidth=6.5in
+\textheight=9.2in
+\parskip=.3cm
+\oddsidemargin=.1in
+\evensidemargin=.1in
+\headheight=-.3in
+
+%------------------------------------------------------------
+% newcommand
+%------------------------------------------------------------
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Rclass}[1]{\textit{#1}}
+\newcommand{\Rpackage}[1]{\textit{#1}}
+\newcommand{\Rexpression}[1]{\texttt{#1}}
+\newcommand{\Rmethod}[1]{{\texttt{#1}}}
+\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
+
+\begin{document}
+
+\renewenvironment{knitrout}{\begin{singlespace}}{\end{singlespace}}
+\renewcommand*\listfigurename{Figures}
+\renewcommand*\listtablename{Tables}
+
+<<openLibrary, echo=FALSE>>=
+library(xtable)
+options(continue=" ")
+options(width=60)
+library(knitr)
+
+@
+
+
+<<include=TRUE ,echo=FALSE,eval=TRUE>>=
+opts_chunk$set(highlight=TRUE, tidy=TRUE, keep.space=TRUE, keep.blank.space=FALSE, keep.comment=TRUE, concordance=TRUE,tidy=FALSE,comment="")
+
+knit_hooks$set(inline = function(x) {
+  if (is.numeric(x)) return(round(x, 3))#knitr:::format_sci(x, 'latex'))
+  if (is.character(x)) return(x)
+#   knitr:::hi_latex(x) 
+})
+
+knit_hooks$set(crop = hook_pdfcrop)
+
+bold.colHeaders <- function(x) {
+  x <- gsub("\\^(\\d)","$\\^\\1$",x)
+  x <- gsub("\\%","\\\\%",x)
+  x <- gsub("\\_"," ",x)
+  returnX <- paste("\\multicolumn{1}{c}{\\textbf{\\textsf{", x, "}}}", sep = "")
+}
+
+addSpace <- function(x) ifelse(x != "1", "[5pt]","")
+
+@
+
+%------------------------------------------------------------
+\title{Search Test}
+%------------------------------------------------------------
+\author[1]{Laura De Cicco}
+\affil[1]{United States Geological Survey}
+
+% \maketitle
+
+\noindent{\huge\textsf{\textbf{Search Test}}}
+
+\noindent\textsf{\today}
+% 
+% \tableofcontents
+% \listoffigures
+% \listoftables
+
+%------------------------------------------------------------ 
+\section{Load Data}
+\label{sec:load}
+%------------------------------------------------------------
+
+The following code is used to pull raw data from the Water Quality Portal \url{http://www.waterqualitydata.us/}. The user is responsible for choosing a parameter and huc.
+
+<<workflowFlowHistory, echo=TRUE,eval=TRUE, message=FALSE, warning=FALSE>>=
+library(dataRetrieval)
+library(dplyr)
+library(USGSHydroTools)
+
+data <- getWQPData(huc="0410*", characteristicName="Phosphorus")
+
+sites <-  getWQPSites(huc="0410*", characteristicName="Phosphorus")
+
+data_bySite <- group_by(data, MonitoringLocationIdentifier)
+summarize <-  summarise(data_bySite,
+  Count = n(),
+  CountAfter2000 = sum(ActivityStartDateTime > 
+                     as.POSIXct("2000-01-01 00:00:00"),na.rm = TRUE),
+  MinDate = min(ActivityStartDateTime, na.rm = TRUE),
+  MaxDate = max(ActivityStartDateTime, na.rm = TRUE)) %.%
+  arrange(desc(Count))  %.%
+  filter(Count >= 50) %.%
+  filter(CountAfter2000 >= 10)
+
+
+
+
+@
+
+
+<<tableUnits, echo=FALSE,results='asis',message=FALSE>>=
+
+summarizeTable <- summarize
+summarizeTable$MinDate <- as.character(as.Date(summarizeTable$MinDate))
+summarizeTable$MaxDate <- as.character(as.Date(summarizeTable$MaxDate))
+
+print(xtable(summarizeTable,
+       label="tab:Summary",
+       caption="Sites with counts at least 50 samples and at least 10 after 2000",
+       caption.placement="top",
+       size = "\\footnotesize",
+       latex.environment=NULL,
+       floating=FALSE,
+       sanitize.colnames.function =  bold.colHeaders,
+       sanitize.rownames.function = addSpace,
+       include.rownames = FALSE
+      ))
+
+@
+
+
+
+<<plotMap, echo=FALSE, eval=TRUE, fig.cap="Map of all sites">>=
+library(USGSHydroTools)
+
+sumStation <- merge(summarize, sites, by="MonitoringLocationIdentifier", all.x=TRUE)
+
+latVar <- "LatitudeMeasure"
+lonVar <- "LongitudeMeasure" 
+
+mainTitle <- "All sites measuring Phosphorous"
+
+xmin <- min(sumStation[,lonVar],na.rm = TRUE)-3
+xmax <- max(sumStation[,lonVar],na.rm = TRUE)+1
+ymin <- min(sumStation[,latVar],na.rm = TRUE)-.5
+ymax <- max(sumStation[,latVar],na.rm = TRUE)+.5
+
+#legend upper left corner:
+xleft <- xmin + 0.2
+ytop <- 0.85*(ymax-ymin) + ymin
+
+MapLocations(sites,latVar,lonVar,
+             xmin,xmax,ymin,ymax,mainTitle=mainTitle,
+             includeLabels=FALSE)
+@
+
+
+<<filteredMap, echo=FALSE, eval=TRUE, fig.cap="Map of sites with at least 50 samples and 10 since 2000">>=
+
+sizeVar <- "Count"
+colorVar <- "CountAfter2000"
+latVar <- "LatitudeMeasure"
+lonVar <- "LongitudeMeasure" 
+mainTitle <- ""
+
+sizeThresh <- c(100,1000)
+colThresh <- round(quantile(sumStation[,colorVar],probs = c(.25,.5,.75),na.rm=TRUE))
+
+colText <- expression(bold(atop("Color represents number","of samples since 2000")))
+
+sizeText <- expression(bold(atop("Size represents","total number of samples")))
+
+MapSizeColor(sumStation,colorVar,sizeVar,latVar,lonVar,sizeThresh, colThresh,
+             titlePos=-1,colText=colText,sizeText=sizeText,
+             xmin,xmax,ymin,ymax,xleft=xleft,ytop=ytop,
+             mainTitle=mainTitle,includeLabels=FALSE)
+
+@
+
+% # <<getDischarge>>=
+% # 
+% # siteIDs <- sapply(strsplit(sumStation$MonitoringLocationIdentifier, "-"), function(x) x[2])
+% # sumStation$siteIDs <- siteIDs
+% # 
+% # dataAvail <- getNWISDataAvailability(siteIDs,type = "dv")
+% # dischargeAvailable <- filter(dataAvail, parameter_cd == "00060") %.%
+% #   select(site_no, Qstart=startDate, Qend=endDate, Qcount=count)
+% # 
+% # mergedInfo <- merge(sumStation,dischargeAvailable, by.x="siteIDs", by.y="site_no")
+% # mergedInfo <- select(mergedInfo, siteIDs, Count, CountAfter2000, 
+% #                      MinDate, MaxDate, Qstart, Qend, Qcount, 
+% #                      LatitudeMeasure, LongitudeMeasure)
+% # mergedInfo$MinDate <- as.Date(mergedInfo$MinDate)
+% # mergedInfo$MaxDate <- as.Date(mergedInfo$MaxDate)
+% # @
+% # 
+
+\end{document}

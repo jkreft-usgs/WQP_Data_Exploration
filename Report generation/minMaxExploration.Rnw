@@ -1,0 +1,418 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage{amsmath}
+\usepackage{times}
+\usepackage{hyperref}
+\usepackage[numbers, round]{natbib}
+\usepackage[american]{babel}
+\usepackage{authblk}
+\usepackage{subfig}
+\usepackage{placeins}
+\usepackage{footnote}
+\usepackage{tabularx}
+\usepackage{parskip}
+\usepackage{threeparttable}
+
+\usepackage{longtable}
+
+\renewcommand\Affilfont{\itshape\small}
+
+\usepackage{csquotes}
+\usepackage{setspace}
+
+\doublespacing
+
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\usepackage{graphicx}
+
+
+\usepackage{mathptmx}% Times Roman font
+\usepackage[scaled=.90]{helvet}% Helvetica, served as a model for arial
+
+\usepackage{indentfirst}
+\setlength{\parskip}{0pt}
+
+\usepackage{courier}
+
+\usepackage{titlesec}
+\usepackage{titletoc}
+
+\titleformat{\section}
+  {\normalfont\sffamily\bfseries\LARGE}
+  {\thesection}{0.5em}{}
+\titleformat{\subsection}
+  {\normalfont\sffamily\bfseries\Large}
+  {\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}
+  {\normalfont\sffamily\large}
+  {\thesubsubsection}{0.5em}{}
+  
+\titlecontents{section}
+[2em]                 % adjust left margin
+{\sffamily}             % font formatting
+{\contentslabel{2.3em}} % section label and offset
+{\hspace*{-2.3em}}
+{\titlerule*[0.25pc]{.}\contentspage}
+  
+\titlecontents{subsection}
+[4.6em]                 % adjust left margin
+{\sffamily}             % font formatting
+{\contentslabel{2.3em}} % section label and offset
+{\hspace*{-2.3em}}
+{\titlerule*[0.25pc]{.}\contentspage}
+  
+\titlecontents{subsubsection}
+[6.9em]                 % adjust left margin
+{\sffamily}             % font formatting
+{\contentslabel{2.3em}} % section label and offset
+{\hspace*{-2.3em}}
+{\titlerule*[0.25pc]{.}\contentspage}
+
+\titlecontents{table}
+[0em]                 % adjust left margin
+{\sffamily}             % font formatting
+{\textbf{Table}\hspace*{2em} \contentslabel {2em}} % section label and offset
+{\hspace*{4em}}
+{\titlerule*[0.25pc]{.}\contentspage}
+
+\titlecontents{figure}
+[0em]                 % adjust left margin
+{\sffamily}             % font formatting
+{\textbf{Figure}\hspace*{2em} \contentslabel {2em}} % section label and offset
+{\hspace*{4em}}
+{\titlerule*[0.25pc]{.}\contentspage}
+
+%Italisize and change font of urls:
+\urlstyle{sf}
+\renewcommand\UrlFont\itshape
+
+\usepackage{caption}
+\captionsetup{
+  font={sf},
+  labelfont={bf,sf},
+  labelsep=period,
+  justification=justified,
+  singlelinecheck=false
+}
+
+\setlength\parindent{20pt}
+
+\textwidth=6.5in
+\textheight=9.2in
+\parskip=.3cm
+\oddsidemargin=.1in
+\evensidemargin=.1in
+\headheight=-.3in
+
+%------------------------------------------------------------
+% newcommand
+%------------------------------------------------------------
+\newcommand{\scscst}{\scriptscriptstyle}
+\newcommand{\scst}{\scriptstyle}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Rclass}[1]{\textit{#1}}
+\newcommand{\Rpackage}[1]{\textit{#1}}
+\newcommand{\Rexpression}[1]{\texttt{#1}}
+\newcommand{\Rmethod}[1]{{\texttt{#1}}}
+\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
+
+\begin{document}
+
+\renewenvironment{knitrout}{\begin{singlespace}}{\end{singlespace}}
+\renewcommand*\listfigurename{Figures}
+\renewcommand*\listtablename{Tables}
+
+<<openLibrary, echo=FALSE>>=
+library(xtable)
+options(continue=" ")
+options(width=60)
+library(knitr)
+
+@
+
+
+<<include=TRUE ,echo=FALSE,eval=TRUE>>=
+opts_chunk$set(highlight=TRUE, tidy=TRUE, keep.space=TRUE, keep.blank.space=FALSE, keep.comment=TRUE, concordance=TRUE,tidy=FALSE,comment="")
+
+knit_hooks$set(inline = function(x) {
+  if (is.numeric(x)) return(round(x, 3))#knitr:::format_sci(x, 'latex'))
+  if (is.character(x)) return(x)
+#   knitr:::hi_latex(x) 
+})
+
+knit_hooks$set(crop = hook_pdfcrop)
+
+bold.colHeaders <- function(x) {
+  x <- gsub("\\^(\\d)","$\\^\\1$",x)
+  x <- gsub("\\%","\\\\%",x)
+  x <- gsub("\\_"," ",x)
+  returnX <- paste("\\multicolumn{1}{c}{\\textbf{\\textsf{", x, "}}}", sep = "")
+}
+
+addSpace <- function(x) ifelse(x != "1", "[5pt]","")
+
+@
+
+%------------------------------------------------------------
+\title{Characteristic Exploration}
+%------------------------------------------------------------
+\author[1]{Laura De Cicco}
+\affil[1]{United States Geological Survey}
+
+% \maketitle
+
+\noindent{\huge\textsf{\textbf{Characteristic Exploration}}}
+
+\noindent\textsf{\today}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+%------------------------------------------------------------ 
+\section{Load Data}
+\label{sec:load}
+%------------------------------------------------------------
+
+The following code is used to pull raw data from the Water Quality Portal \url{http://www.waterqualitydata.us/}. The user is responsible for choosing a parameter, state, maxVal, and expectedUnits.
+
+<<workflowFlowHistory, echo=TRUE,eval=FALSE, message=FALSE, warning=FALSE>>=
+library(dataRetrieval)
+library(USGSHydroTools)
+
+parameter <- "pH"
+state <-  "US:55" 
+
+minVal <- 0
+maxVal <- 14
+expectedUnits <- "None"
+
+sitesReturned <- getWQPSites(statecode=state, 
+                             characteristicName=parameter)
+dataReturned <- getGeneralWQPData(statecode=state, 
+                                  characteristicName=parameter)
+
+
+@
+
+
+
+<<loadDataReal, echo=FALSE,eval=TRUE, message=FALSE>>=
+
+library(dataRetrieval)
+library(USGSHydroTools)
+
+parameter <- "Chloride"
+state <-  "US:55" 
+
+if(parameter == "Chloride"){
+  if(state == "US:55"){
+    load("D:/LADData/RCode/dataRetrieval/wisconsinChloride.RData")
+  } else {
+    load("D:/LADData/RCode/dataRetrieval/nhChloride.RData")
+  }
+} else {
+  if(state == "US:55"){
+    load("D:/LADData/RCode/QAQC_WQP/pHWI.RData")
+  }
+}
+minVal <- 0
+maxVal <- 500
+expectedUnits <- "mg/l"
+
+@
+
+
+%------------------------------------------------------------ 
+\section{Convert Units}
+\label{sec:units}
+%------------------------------------------------------------
+<<unitExploration, echo=FALSE, eval=TRUE, message=FALSE>>=
+library(dplyr)
+# by.type <- group_by(dataReturned, ResultMeasure.MeasureUnitCode)
+summaryUnits <- group_by(dataReturned, ResultMeasure.MeasureUnitCode) %.% 
+                  summarise(count = length(ResultMeasure.MeasureUnitCode)) %.% 
+                  arrange(desc(count))
+
+names(summaryUnits) <- c("Reported Units","Count")
+summaryUnits <- as.data.frame(summaryUnits)
+
+@
+
+
+To compare \Sexpr{parameter} values across different agencies, we first need to explore the reported unit types. \Sexpr{nrow(summaryUnits)} unit types are reported in this dataset. If this is a reasonably small number, it would be possible to create a conversion table to convert each unit type to \Sexpr{expectedUnits}.
+
+For this generalized report, we are using \Sexpr{expectedUnits} as the standard choice (based on the user-input shown in section \ref{sec:load}), and ignore data with any other reported unit type.
+
+Table \ref{tab:units} shows the reported unit values.
+
+<<tableUnits, echo=FALSE,results='asis',message=FALSE>>=
+
+print(xtable(summaryUnits,
+       label="tab:units",
+       caption="Reported units and counts",
+       caption.placement="top",
+       size = "\\footnotesize",
+       latex.environment=NULL,
+       floating=FALSE,
+       sanitize.colnames.function =  bold.colHeaders,
+       sanitize.rownames.function = addSpace,
+       sanitize.text.function = function(x) {x},
+       include.rownames = FALSE
+      ))
+
+dataReturned <- filter(dataReturned, ResultMeasure.MeasureUnitCode == expectedUnits)
+
+@
+
+%------------------------------------------------------------ 
+\section{Summarize Data}
+\label{sec:summary}
+%------------------------------------------------------------
+
+
+
+<<summarizeDat2, echo=FALSE,eval=TRUE, message=FALSE>>=
+# Number of NA's:
+numNA <- sum(is.na(dataReturned$ResultMeasureValue))
+# Number of values over maxVal:
+numHigh <- sum(dataReturned$ResultMeasureValue[!is.na(dataReturned$ResultMeasureValue)] > maxVal)
+@
+
+Some basic information about the data. There are \Sexpr{numNA} NA values, and \Sexpr{numHigh} values above the defined maxVal of \Sexpr{maxVal} \Sexpr{expectedUnits}. Table \ref{tab:HighVals} shows the sites that report values over maxVal.
+
+
+<<tablesites, echo=FALSE,results='asis'>>=
+# This should be replaced with some dplyr fun:
+numOutsiders <- which(dataReturned$ResultMeasureValue > maxVal | 
+         dataReturned$ResultMeasureValue < minVal)
+if(length(numOutsiders) > 0){
+  subSummaryDF <- summarizedataDF(dataReturned[dataReturned$ResultMeasureValue > maxVal | 
+                                                 dataReturned$ResultMeasureValue < minVal,],
+                                  "MonitoringLocationIdentifier", "ResultMeasureValue", "ActivityStartDate")
+  
+  
+  subSum <- subSummaryDF[,c("MonitoringLocationIdentifier","count","mean","max")]
+  subSum <- arrange(subSum, desc(max))
+  
+  print(xtable(subSum,
+         label="tab:HighVals",
+         caption="Sites with reported values higher than the defined maxVal, sorted by maximum reported value",
+         digits=c(0,0,0,0,0)),
+         caption.placement="top",
+         size = "\\footnotesize",
+         latex.environment=NULL,
+         floating=FALSE,
+         tabular.environment='longtable',
+  #        sanitize.text.function = function(x) {x},
+         sanitize.colnames.function =  bold.colHeaders,
+         sanitize.rownames.function = addSpace,
+         include.rownames = FALSE
+        )
+
+} else {
+  message("No values out of range")
+}
+
+@
+
+<<summarizeDat, echo=FALSE,eval=TRUE, message=FALSE>>=
+
+summaryDF <- summarizedataDF(dataReturned, 
+                             "MonitoringLocationIdentifier", 
+                             "ResultMeasureValue", 
+                             "ActivityStartDate")
+
+lat <- as.numeric(sitesReturned$LatitudeMeasure)
+lon <- as.numeric(sitesReturned$LongitudeMeasure)
+names(lat) <- sitesReturned$MonitoringLocationIdentifier
+names(lon) <- sitesReturned$MonitoringLocationIdentifier
+
+summaryDF$lat <- lat[summaryDF$MonitoringLocationIdentifier]
+summaryDF$lon <- lon[summaryDF$MonitoringLocationIdentifier]
+
+# head(summaryDF)
+
+@
+
+
+
+
+
+Figure \ref{fig:plotMap} shows a map of all the site locations that measure \Sexpr{parameter}. The color of the points on the plot represent the magnitude of the maximum reported values of \Sexpr{parameter} in \Sexpr{expectedUnits}. The size of the circles represents the overall number of values reported at those sites.
+
+
+
+<<plotMap, echo=FALSE, fig.cap="Map of all values">>=
+sizeVar <- "count"
+colorVar <- "mean"
+latVar <- "lat"
+lonVar <- "lon"
+mainTitle <- paste0("Concentration of ",parameter)
+
+if(state=="US:55"){
+  #Wisconsin:
+  xmin <- -96.25
+  xmax <- -85
+  ymin <- 42
+  ymax <- 47.5
+  #legend upper left corner:
+  xleft <- xmin + 0.2
+  ytop <- .5+(ymin + ymax)/2 
+
+} else {
+  xmin <- min(summaryDF$lon)-3
+  xmax <- max(summaryDF$lon)+1
+  ymin <- min(summaryDF$lat)-.5
+  ymax <- max(summaryDF$lat)+.5
+  
+  
+  #legend upper left corner:
+  xleft <- xmin + 0.2
+  ytop <- 0.85*(ymax-ymin) + ymin
+}
+
+sizeThresh <- c(1,10)
+colThresh <- round(quantile(summaryDF[,colorVar],probs = c(.25,.5,.75),na.rm=TRUE),digits = 1)
+
+colText <- sapply(c(bquote(bold(atop("Concentration of ", paste(.(parameter), " in [",.(expectedUnits),"]"))))),as.expression)
+
+sizeText <- expression(bold(atop("Size represents","number of samples")))
+
+MapSizeColor(summaryDF,colorVar,sizeVar,latVar,lonVar,sizeThresh, colThresh,
+             titlePos=-1,colText=colText,sizeText=sizeText,
+             xmin,xmax,ymin,ymax,xleft=xleft,ytop=ytop,
+             mainTitle=mainTitle,includeLabels=FALSE)
+
+@
+
+
+Figure \ref{fig:plotMap2} shows the sites that have reported values greater than \Sexpr{maxVal} [\Sexpr{expectedUnits}].
+
+
+<<plotMap2, echo=FALSE, fig.cap="Map of values above maxVal">>=
+#Map of sites with values over max or under min:
+if(length(numOutsiders) > 0){
+  subSummaryDF$lat <- lat[subSummaryDF$MonitoringLocationIdentifier]
+  subSummaryDF$lon <- lon[subSummaryDF$MonitoringLocationIdentifier]
+  mainTitle <- paste0("Concentration above ", maxVal,  "[",expectedUnits,"]","\n",parameter)
+  
+  
+  colThresh <- round(quantile(subSummaryDF[,colorVar],probs = c(.25,.5,.75)))
+  
+  MapSizeColor(subSummaryDF,colorVar,sizeVar,latVar,lonVar,sizeThresh,colThresh,
+               titlePos=-1,colText=colText,sizeText=sizeText,
+               xmin,xmax,ymin,ymax,xleft=xleft,ytop=ytop,
+               mainTitle=mainTitle,includeLabels=FALSE)
+} else {
+  message("No values to plot")
+}
+
+@
+
+\clearpage
+
+
+\end{document}
