@@ -2,7 +2,7 @@ library(dataRetrieval)
 library(dplyr)
 library(USGSHydroTools)
 
-data <- getWQPData(huc="0410*")
+# data <- getWQPData(huc="0410*")
 
 sites <-  getWQPSites(huc="0410*")
 
@@ -23,16 +23,14 @@ xmax <- max(sites[,lonVar],na.rm = TRUE)+1
 ymin <- min(sites[,latVar],na.rm = TRUE)-.5
 ymax <- max(sites[,latVar],na.rm = TRUE)+.5
 
-#legend upper left corner:
-xleft <- xmin + 0.2
-ytop <- 0.85*(ymax-ymin) + ymin
-
 MapLocations(sites,latVar,lonVar,
              xmin,xmax,ymin,ymax,mainTitle=mainTitle,
              includeLabels=FALSE)
 
-latVar <- "LatitudeMeasure"
-lonVar <- "LongitudeMeasure"
+#legend upper left corner:
+xleft <- xmin + 0.2
+ytop <- 0.85*(ymax-ymin) + ymin
+
 mainTitle <- "All sites by organization"
 xmin <- min(sites[,lonVar],na.rm = TRUE)-.5
 xmax <- max(sites[,lonVar],na.rm = TRUE)+.5
@@ -49,8 +47,8 @@ ytop <- ymax#(ymax-ymin)*.85 + ymin
 
 # colors <- colorRampPalette(c("white","red"))(count)
 colors <- rainbow(count)
-colorThresh <- 1:16
-
+colors[1] <- "white"
+colThresh <- 1:length(unique(sites$OrganizationFormalName))
 
 MapSizeColor(sites,"OrganizationFormalName",NA,latVar,lonVar,
              sizeThresh=NA,colThresh=1:16,
