@@ -37,7 +37,7 @@ sites$org <- as.factor(sites$OrganizationFormalName)
 MapSizeColor(sites,"org",NA,latVar,lonVar,NA,1:16,xmin,xmax,ymin,ymax,xleft,ytop)
 
 
-
+write.csv(sitebyorg,file="orgs.csv",row.names = FALSE)
 
 
 
