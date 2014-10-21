@@ -4,14 +4,14 @@ library(USGSHydroTools)
 
 # data <- getWQPData(huc="0410*")
 
-sites <-  getWQPSites(huc="0410*")
+sites <-  getWQPSites(huc="0410*", characteristicType="Nutrient" )
 
 
 orggroup <- unique(sites$OrganizationFormalName)
 count <- length(orggroup)
 sitebyorg <- group_by(sites,OrganizationFormalName) %>%
-  summarize(count = n()) %>% 
-  arrange(desc(count))
+  summarize(count = n()) #%>% 
+  #arrange(desc(count))
 
 latVar <- "LatitudeMeasure"
 lonVar <- "LongitudeMeasure" 
@@ -48,11 +48,14 @@ ytop <- ymax#(ymax-ymin)*.85 + ymin
 # colors <- colorRampPalette(c("white","red"))(count)
 colors <- rainbow(count)
 colors[1] <- "white"
-colThresh <- 1:length(unique(sites$OrganizationFormalName))
+sitelist <- unique(sites$OrganizationFormalName) %>% 
+  order(OrganizationFormalName)
+
+colThresh <- 1:length(sitelist)
 
 MapSizeColor(sites,"OrganizationFormalName",NA,latVar,lonVar,
-             sizeThresh=NA,colThresh=1:16,
-             colVector=colors,colBinText=unique(sites$OrganizationFormalName),
+             sizeThresh=NA,colThresh=colThresh,
+             colVector=colors,colBinText=sitelist,
              colText = "Agencies",
              xmin,xmax,ymin,ymax,xleft,ytop,
              LegCex=0.75)
