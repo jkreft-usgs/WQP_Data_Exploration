@@ -189,9 +189,9 @@ minVal <- 0
 maxVal <- 14
 expectedUnits <- "None"
 
-sitesReturned <- getWQPSites(statecode=state, 
+sitesReturned <- whatWQPsites(statecode=state, 
                              characteristicName=parameter)
-dataReturned <- getGeneralWQPData(statecode=state, 
+dataReturned <- readWQPdata(statecode=state, 
                                   characteristicName=parameter)
 
 

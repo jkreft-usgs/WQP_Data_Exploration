@@ -4,7 +4,7 @@ library(USGSHydroTools)
 
 # data <- getWQPData(huc="0410*")
 
-sites <-  getWQPSites(huc="0410*", characteristicType="Nutrient" )
+sites <-  whatWQPsites(huc="0410*", characteristicType="Nutrient" )
 
 
 orggroup <- unique(sites$OrganizationFormalName)
@@ -48,8 +48,8 @@ ytop <- ymax#(ymax-ymin)*.85 + ymin
 # colors <- colorRampPalette(c("white","red"))(count)
 colors <- rainbow(count)
 colors[1] <- "white"
-sitelist <- unique(sites$OrganizationFormalName) %>% 
-  order(OrganizationFormalName)
+sitelist <- unique(sites$OrganizationFormalName) 
+# site  order(OrganizationFormalName)
 
 colThresh <- 1:length(sitelist)
 
