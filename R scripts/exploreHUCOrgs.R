@@ -4,7 +4,9 @@ library(USGSHydroTools)
 
 # data <- getWQPData(huc="0410*")
 
-sites <-  whatWQPsites(huc="0410*", characteristicType="Nutrient" )
+#sites <-  whatWQPsites(huc="0410*", characteristicType="Nutrient" )
+sites <-  whatWQPsites(huc="0207*", characteristicType="Nutrient" )
+
 
 
 orggroup <- unique(sites$OrganizationFormalName)
