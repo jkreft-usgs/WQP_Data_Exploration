@@ -1,0 +1,117 @@
+<html>
+<head>
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"/>
+<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.1.7/leaflet-providers.min.js"></script>
+</head>
+<body>
+<div id="map" style="width: 100%; height: 600px;"></div>
+<script type="text/javascript">
+L.TileLayer.BetterWMS = L.TileLayer.WMS.extend({
+
+     onAdd: function (map) {
+         // Triggered when the layer is added to a map.
+         //   Register a click listener, then do all the upstream WMS things
+         L.TileLayer.WMS.prototype.onAdd.call(this, map);
+         map.on('click', this.getFeatureInfo, this);
+     },
+
+     onRemove: function (map) {
+         // Triggered when the layer is removed from a map.
+         //   Unregister a click listener, then do all the upstream WMS things
+         L.TileLayer.WMS.prototype.onRemove.call(this, map);
+         map.off('click', this.getFeatureInfo, this);
+     },
+
+     getFeatureInfo: function (evt) {
+         // Make an AJAX request to the server and hope for the best
+         var url = this.getFeatureInfoUrl(evt.latlng),
+             showResults = L.Util.bind(this.showGetFeatureInfo, this);
+         $.ajax({
+             url: url,
+             success: function (data, status, xhr) {
+                 var err = typeof data === 'string' ? null : data;
+                 showResults(err, evt.latlng, data);
+             },
+             error: function (xhr, status, error) {
+                 showResults(error);
+             }
+         });
+     },
+
+     getFeatureInfoUrl: function (latlng) {
+         // Construct a GetFeatureInfo request URL given a point
+         var point = this._map.latLngToContainerPoint(latlng, this._map.getZoom()),
+             size = this._map.getSize(),
+
+             params = {
+                 request: 'GetFeatureInfo',
+                 service: 'WMS',
+                 srs: 'EPSG:4326',
+                 styles: this.wmsParams.styles,
+                 transparent: this.wmsParams.transparent,
+                 feature_Count: 50,
+                 version: this.wmsParams.version,
+                 format: this.wmsParams.format,
+                 bbox: this._map.getBounds().toBBoxString(),
+                 height: size.y,
+                 width: size.x,
+                 propertyName: 'name,type,provider',
+                 layers: this.wmsParams.layers,
+                 query_layers: this.wmsParams.layers,
+                 //added to make wms getfeatureinfo query work with wqp server
+                 searchParams: this.wmsParams.searchParams,
+                 info_format: 'text/html'
+             };
+
+         params[params.version === '1.3.0' ? 'i' : 'x'] = point.x;
+         params[params.version === '1.3.0' ? 'j' : 'y'] = point.y;
+
+         return this._url + L.Util.getParamString(params, this._url, true);
+     },
+
+     showGetFeatureInfo: function (err, latlng, content) {
+         if (err) {
+             console.log(err);
+             return;
+         } // do nothing if there's an error
+
+         // Otherwise show the content in a popup, or something.
+         L.popup({
+             maxWidth: 800
+         })
+             .setLatLng(latlng)
+             .setContent(content)
+             .openOn(this._map);
+     }
+ });
+
+ L.tileLayer.betterWms = function (url, options) {
+     return new L.TileLayer.BetterWMS(url, options);
+ };
+
+ var map = L.map('map', {
+     center: [44.095475729465, -84.388916015626],
+     zoom: 4,
+     zoomControl: true
+ });
+ 
+var terrainTiles = L.tileLayer.provider('OpenTopoMap');
+terrainTiles.addTo(map);
+map.setView([44.095475729465, -84.388916015626], 3);
+
+
+ var url = 'http://www.waterqualitydata.us/ogcservices/wms';
+
+ L.tileLayer.betterWms(url, {
+     layers: 'wqp_sites',
+     query_layers: 'wqp_sites',
+     format: 'image/png',
+     styles: 'wqp_sources',
+     searchParams: 'countrycode:US;characteristicName:Atrazine',
+     transparent: true
+ }).addTo(map);
+</script>
+</body>
+</html>

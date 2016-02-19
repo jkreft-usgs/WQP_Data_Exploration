@@ -1,0 +1,91 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"/>
+<script src="https://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.1.7/leaflet-providers.min.js"></script>
+</head>
+<body>
+<h3>Stream or well sites from the water quality portal that have nutrient samples in the HUC4 0504</h3>
+<div id="map" style="width: 100%; height: 600px;"></div>
+<script type="text/javascript">
+
+//This example uses leaflet to render maps.  Learn more about leaflet at http://leafletjs.com/ 
+var map = L.map('map');
+// leaflet providers is a simple way to add a variety of free basemaps to a map.  
+// learn more here: https://github.com/leaflet-extras/leaflet-providers
+var basemapTiles = L.tileLayer.provider('Esri.WorldTopoMap');
+basemapTiles.addTo(map);
+map.setView([35.9908385, -78.9005222], 3);
+
+
+
+
+
+//function to return a color based on a value associated with each feature. 
+// We can then set a different color for each marker based on a characteristic of the 
+// marker- in this case, the type of site.
+// While there is a handy leaflet var called geojsonMarkerOptions
+// that lets you set the marker style for a leaflet geoJSON layer, it only works if you want every marker to be exactly the same
+function getValue(x) {
+	return x == "Stream" ? "#800026" :
+	       x == "Well" ? "#FEB24C" :
+	       x == "Land" ? "#E31A1C" :
+	       x == "Estuary" ? "#FC4E2A" :
+	       x == "Facility" ? "#FD8D3C" :
+	       x == "Glacier"? "#BD0026" :
+	       x == "Lake, Reservoir, Impoundment" ? "#FED976" :
+		       "#FFEDA0";
+}
+
+
+
+//set the popup text for each feature, based on the geojson properties of each feature.  
+//The text is rendered as html and style with CSS3, so you can do pretty much anything to want in here- 
+//this example is a very simple list.
+function setPopupValue(feature, layer) {
+            var popupText = "Organization Name: " + feature.properties.orgName
+                + "<br>Station Name: " + feature.properties.locName
+                + "<br>Station ID: " + feature.properties.name
+                + "<br>Station Type: " + feature.properties.type;
+            layer.bindPopup(popupText);
+            }
+// actually adding the data to the map.
+//learn more about this here:  
+function addDataToMap(data, map) {
+    var dataLayer = L.geoJson(data, {
+        onEachFeature: setPopupValue,
+        pointToLayer: function (feature, latlng) {
+        //here we are using the built-in circleMarker.  If we want to do more, we can make fancier icons
+        return L.circleMarker(latlng, {
+                    radius: 5,
+                    fillColor: getValue(feature.properties.type),
+                    color: "#000",
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.7
+                });
+        }
+        });
+    dataLayer.addTo(map);
+    map.fitBounds(L.geoJson(data).getBounds());
+}
+
+
+//using the jquery ajax shorthand method getJSON for getting the data from the Water Quality Portal's wfs endpoint
+// http://api.jquery.com/jquery.getjson/
+var wqpURL = "http://www.waterqualitydata.us/ogcservices/wfs"
+$.getJSON( wqpURL, {
+	"service": "WFS",
+	"request": "GetFeature",
+	"version": "1.0.0",
+	"typeName": "wqp_sites",
+	// SearchParams 
+	"SearchParams": "siteType:Stream;siteType:Well;huc:0504*;characteristicType:Nutrient;sorted:no",
+	"styles": "",
+	"outputFormat": "application/json",
+	}, 
+	function(data) { addDataToMap(data, map); });
+</script>
+</body>
+</html>

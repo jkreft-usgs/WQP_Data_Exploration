@@ -1,0 +1,57 @@
+<html>
+<head>
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"/>
+<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.1.7/leaflet-providers.min.js"></script>
+</head>
+<body>
+<div id="map" style="width: 100%; height: 600px;"></div>
+<script type="text/javascript">
+var map = L.map('map');
+var terrainTiles = L.tileLayer.provider('OpenTopoMap');
+terrainTiles.addTo(map);
+map.setView([35.9908385, -78.9005222], 3);
+
+var geojsonMarkerOptions = {
+    radius: 4,
+    fillColor: "#ff7800",
+    color: "#000",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.8
+};
+
+function onEachFeature(feature, layer) {
+            var popupText = "Organization Name: " + feature.properties.orgName
+                + "<br>Station Name: " + feature.properties.locName
+                + "<br>Station ID: " + feature.properties.name
+                + "<br>Station Type: " + feature.properties.type;
+            layer.bindPopup(popupText);
+            }
+
+function addDataToMap(data, map) {
+    var dataLayer = L.geoJson(data, {
+        onEachFeature: onEachFeature,
+        pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, geojsonMarkerOptions);
+        }
+        });
+    dataLayer.addTo(map);
+    map.fitBounds(L.geoJson(data).getBounds());
+}
+
+var wqpURL = "http://www.waterqualitydata.us/ogcservices/wms"
+$.getJSON( wqpURL, {
+	"service": "WFS",
+	"request": "GetFeature",
+	"version": "1.0.0",
+	"typeName": "wqp_sites",
+	"SearchParams": "siteType:Stream|Well;huc:0504*;characteristicType:Nutrient;sorted:no",
+	"styles": "",
+	"outputFormat": "application/json",
+	}, 
+	function(data) { addDataToMap(data, map); });
+</script>
+</body>
+</html>
